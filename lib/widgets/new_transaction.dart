@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:transaction_app/widgets/adaptive_flat_button.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function(String, double, DateTime) onAddTransaction;
@@ -17,54 +21,70 @@ class _NewTransactionState extends State<NewTransaction> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          TextField(
-            controller: _titleCtrl,
-            decoration: InputDecoration(labelText: 'Title'),
-          ),
-          TextField(
-            controller: _amountCtrl,
-            decoration: InputDecoration(labelText: 'Amount'),
-            keyboardType: TextInputType.number,
-            onSubmitted: (_) => _submitData(),
-          ),
-          Container(
-            height: 75,
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    _date == null
-                        ? 'No Date Chosen'
-                        : 'Picked Date: ${DateFormat.yMMMd().format(_date)}',
-                  ),
-                ),
-                FlatButton(
-                  textColor: Theme.of(context).primaryColor,
-                  child: Text(
-                    'Choose Date',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+    final mq = MediaQuery.of(context);
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.only(
+          top: 10,
+          left: 10,
+          right: 10,
+          bottom: mq.viewInsets.bottom + 10,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            if (Platform.isIOS) ...[
+              CupertinoTextField(
+                controller: _titleCtrl,
+                placeholder: 'Title',
+              ),
+              SizedBox(height: 10),
+              CupertinoTextField(
+                controller: _amountCtrl,
+                placeholder: 'Amount',
+                keyboardType: TextInputType.number,
+              ),
+            ],
+            if (!Platform.isIOS) ...[
+              TextField(
+                controller: _titleCtrl,
+                decoration: InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: _amountCtrl,
+                decoration: InputDecoration(labelText: 'Amount'),
+                keyboardType: TextInputType.number,
+                onSubmitted: (_) => _submitData(),
+              ),
+            ],
+            Container(
+              height: 75,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      _date == null
+                          ? 'No Date Chosen'
+                          : 'Picked Date: ${DateFormat.yMMMd().format(_date)}',
                     ),
                   ),
-                  onPressed: _presentDatePicker,
-                ),
-              ],
+                  AdaptiveFlatButton(
+                    text: 'Choose Date',
+                    handler: _presentDatePicker,
+                  ),
+                ],
+              ),
             ),
-          ),
-          RaisedButton(
-            child: Text(
-              'Add Transaction',
+            RaisedButton(
+              child: Text(
+                'Add Transaction',
+              ),
+              textColor: Theme.of(context).textTheme.button.color,
+              color: Theme.of(context).primaryColor,
+              onPressed: _submitData,
             ),
-            textColor: Theme.of(context).textTheme.button.color,
-            color: Theme.of(context).primaryColor,
-            onPressed: _submitData,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
