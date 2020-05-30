@@ -20,6 +20,29 @@ class _NewTransactionState extends State<NewTransaction> {
   DateTime _date;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(NewTransaction oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    _titleCtrl.dispose();
+    _amountCtrl.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
     return SingleChildScrollView(

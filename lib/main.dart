@@ -57,7 +57,7 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   final List<Transaction> _transactions = [
     // Transaction(
     //   id: 't1',
@@ -79,6 +79,25 @@ class _MyHomePageState extends State<MyHomePage> {
         .where(
             (tx) => tx.date.isAfter(DateTime.now().subtract(Duration(days: 7))))
         .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    print('==> didChangeAppLifecycleState');
+    print(state);
   }
 
   void _deleteTransaction(String id) {
@@ -109,34 +128,29 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget _buildSwitich() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text('Show Chart', style: Theme.of(context).textTheme.headline6),
+        Switch.adaptive(
+          activeColor: Theme.of(context).accentColor,
+          value: _showChart,
+          onChanged: (value) {
+            setState(() {
+              _showChart = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final PreferredSizeWidget appBar = Platform.isIOS
-        ? CupertinoNavigationBar(
-            middle: Text('Personal Expenses'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                GestureDetector(
-                  child: Icon(CupertinoIcons.add),
-                  onTap: () {
-                    _startAddNewTransaction(context);
-                  },
-                )
-              ],
-            ),
-          )
-        : AppBar(
-            title: Text('Personal Expenses'),
-            actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () {
-                  _startAddNewTransaction(context);
-                },
-              ),
-            ],
-          );
+        ? _buildCupertinoNavigationBar(context)
+        : _buidAppBar(context);
     final mq = MediaQuery.of(context);
     final landscape = mq.orientation == Orientation.landscape;
     final availableHeight =
@@ -148,36 +162,11 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (landscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text('Show Chart',
-                      style: Theme.of(context).textTheme.headline6),
-                  Switch.adaptive(
-                    activeColor: Theme.of(context).accentColor,
-                    value: _showChart,
-                    onChanged: (value) {
-                      setState(() {
-                        _showChart = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
+            if (landscape) _buildSwitich(),
             if (!landscape || _showChart)
-              Container(
-                height: availableHeight * (landscape ? 0.7 : 0.3),
-                child: Chart(transactions: _recentTransactions),
-              ),
+              _buildChart(availableHeight, landscape),
             if (!landscape || !_showChart)
-              Container(
-                height: availableHeight * 0.7,
-                child: TransactionList(
-                  transactions: _transactions,
-                  onDeleteTranaction: _deleteTransaction,
-                ),
-              ),
+              _buildTransactionList(availableHeight),
           ],
         ),
       ),
@@ -199,5 +188,53 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
           );
+  }
+
+  AppBar _buidAppBar(BuildContext context) {
+    return AppBar(
+      title: Text('Personal Expenses'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () {
+            _startAddNewTransaction(context);
+          },
+        ),
+      ],
+    );
+  }
+
+  CupertinoNavigationBar _buildCupertinoNavigationBar(BuildContext context) {
+    return CupertinoNavigationBar(
+      middle: Text('Personal Expenses'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          GestureDetector(
+            child: Icon(CupertinoIcons.add),
+            onTap: () {
+              _startAddNewTransaction(context);
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionList(double availableHeight) {
+    return Container(
+      height: availableHeight * 0.7,
+      child: TransactionList(
+        transactions: _transactions,
+        onDeleteTranaction: _deleteTransaction,
+      ),
+    );
+  }
+
+  Widget _buildChart(double availableHeight, bool landscape) {
+    return Container(
+      height: availableHeight * (landscape ? 0.7 : 0.3),
+      child: Chart(transactions: _recentTransactions),
+    );
   }
 }
